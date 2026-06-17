@@ -40,11 +40,11 @@ Private Const PTR_SIZE As Long = 4
 #End If
 #If False Then
 Private SbrStyleNormal, SbrStyleSimple
-Private SbrPanelStyleText, SbrPanelStyleCaps, SbrPanelStyleNum, SbrPanelStyleIns, SbrPanelStyleScrl, SbrPanelStyleTime, SbrPanelStyleDate, SbrPanelStyleKana, SbrPanelStyleHangul, SbrPanelStyleJunja, SbrPanelStyleFinal, SbrPanelStyleKanji, SbrPanelStyleHanja
+Private SbrPanelStyleText, SbrPanelStyleCaps, SbrPanelStyleNum, SbrPanelStyleIns, SbrPanelStyleScrl, SbrPanelStyleTime, SbrPanelStyleDate, SbrPanelStyleKana, SbrPanelStyleHangul, SbrPanelStyleJunja, SbrPanelStyleFinal, SbrPanelStyleKanji, SbrPanelStyleHanja, SbrPanelStyleDateTime
 Private SbrPanelBevelFlat, SbrPanelBevelInset, SbrPanelBevelRaised
 Private SbrPanelAutoSizeNone, SbrPanelAutoSizeSpring, SbrPanelAutoSizeContent
 Private SbrPanelAlignmentLeft, SbrPanelAlignmentCenter, SbrPanelAlignmentRight, SbrPanelAlignmentLeftRight
-Private SbrPanelDTFormatShort, SbrPanelDTFormatLong
+Private SbrPanelDTFormatShort, SbrPanelDTFormatLong, SbrPanelDTFormatMedium, SbrPanelDTFormatGeneral, SbrPanelDTFormatCustom
 #End If
 Public Enum SbrStyleConstants
 SbrStyleNormal = 0
@@ -64,6 +64,7 @@ SbrPanelStyleJunja = 9
 SbrPanelStyleFinal = 10
 SbrPanelStyleKanji = 11
 SbrPanelStyleHanja = 12
+SbrPanelStyleDateTime = 13
 End Enum
 Public Enum SbrPanelBevelConstants
 SbrPanelBevelFlat = 0
@@ -84,6 +85,9 @@ End Enum
 Public Enum SbrPanelDTFormatConstants
 SbrPanelDTFormatShort = 0
 SbrPanelDTFormatLong = 1
+SbrPanelDTFormatMedium = 2
+SbrPanelDTFormatGeneral = 3
+SbrPanelDTFormatCustom = 4
 End Enum
 Private Type RECT
 Left As Long
@@ -781,7 +785,7 @@ If PropShadowPanelsCount > 0 Then
                 InvalidateRect StatusBarHandle, ByVal VarPtr(RC), 1
                 If .AutoSize = SbrPanelAutoSizeContent Then
                     Select Case .Style
-                        Case SbrPanelStyleTime, SbrPanelStyleDate
+                        Case SbrPanelStyleTime, SbrPanelStyleDate, SbrPanelStyleDateTime
                             Call SetParts
                             If PropShowTips = True Then Call UpdateToolTipRects
                     End Select
@@ -1312,7 +1316,7 @@ With PropShadowPanels(PanelIndex)
 .ToolTipID = NextToolTipID()
 .MinWidth = (96 * PixelsPerDIP_X())
 Select Case Style
-    Case SbrPanelStyleText, SbrPanelStyleCaps, SbrPanelStyleNum, SbrPanelStyleIns, SbrPanelStyleScrl, SbrPanelStyleTime, SbrPanelStyleDate, SbrPanelStyleKana, SbrPanelStyleHangul, SbrPanelStyleJunja, SbrPanelStyleFinal, SbrPanelStyleKanji, SbrPanelStyleHanja
+    Case SbrPanelStyleText, SbrPanelStyleCaps, SbrPanelStyleNum, SbrPanelStyleIns, SbrPanelStyleScrl, SbrPanelStyleTime, SbrPanelStyleDate, SbrPanelStyleKana, SbrPanelStyleHangul, SbrPanelStyleJunja, SbrPanelStyleFinal, SbrPanelStyleKanji, SbrPanelStyleHanja, SbrPanelStyleDateTime
         .Style = Style
     Case Else
         Err.Raise 380
@@ -1405,7 +1409,7 @@ End Property
 Friend Property Let FPanelStyle(ByVal Index As Long, ByVal Value As SbrPanelStyleConstants)
 If StatusBarHandle <> NULL_PTR Then
     Select Case Value
-        Case SbrPanelStyleText, SbrPanelStyleCaps, SbrPanelStyleNum, SbrPanelStyleIns, SbrPanelStyleScrl, SbrPanelStyleTime, SbrPanelStyleDate, SbrPanelStyleKana, SbrPanelStyleHangul, SbrPanelStyleJunja, SbrPanelStyleFinal, SbrPanelStyleKanji, SbrPanelStyleHanja
+        Case SbrPanelStyleText, SbrPanelStyleCaps, SbrPanelStyleNum, SbrPanelStyleIns, SbrPanelStyleScrl, SbrPanelStyleTime, SbrPanelStyleDate, SbrPanelStyleKana, SbrPanelStyleHangul, SbrPanelStyleJunja, SbrPanelStyleFinal, SbrPanelStyleKanji, SbrPanelStyleHanja, SbrPanelStyleDateTime
             PropShadowPanels(Index).Style = Value
         Case Else
             Err.Raise 380
@@ -1481,7 +1485,7 @@ End Property
 Friend Property Let FPanelDTFormat(ByVal Index As Long, ByVal Value As SbrPanelDTFormatConstants)
 If StatusBarHandle <> NULL_PTR Then
     Select Case Value
-        Case SbrPanelDTFormatShort, SbrPanelDTFormatLong
+        Case SbrPanelDTFormatShort, SbrPanelDTFormatLong, SbrPanelDTFormatMedium, SbrPanelDTFormatGeneral, SbrPanelDTFormatCustom
             PropShadowPanels(Index).DTFormat = Value
         Case Else
             Err.Raise 380
@@ -1493,7 +1497,7 @@ If StatusBarHandle <> NULL_PTR Then
     UpdateWindow StatusBarHandle
     If PropShadowPanels(Index).AutoSize = SbrPanelAutoSizeContent Then
         Select Case PropShadowPanels(Index).Style
-            Case SbrPanelStyleTime, SbrPanelStyleDate
+            Case SbrPanelStyleTime, SbrPanelStyleDate, SbrPanelStyleDateTime
                 Call SetParts
                 If PropShowTips = True Then Call UpdateToolTipRects
         End Select
@@ -1780,6 +1784,12 @@ Select Case PropShadowPanels(Index).Style
                 Text = VBA.FormatDateTime(VBA.Time, vbShortTime)
             Case SbrPanelDTFormatLong
                 Text = VBA.FormatDateTime(VBA.Time, vbLongTime)
+            Case SbrPanelDTFormatMedium
+                Text = RTrim$(Format$(VBA.Time, "Medium Time"))
+            Case SbrPanelDTFormatGeneral
+                Text = VBA.FormatDateTime(VBA.Time, vbGeneralDate)
+            Case SbrPanelDTFormatCustom
+                If Not PropShadowPanels(Index).Text = vbNullString Then Text = Format$(VBA.Time, PropShadowPanels(Index).Text)
         End Select
         Enabled = PropShadowPanels(Index).Enabled
     Case SbrPanelStyleDate
@@ -1788,6 +1798,12 @@ Select Case PropShadowPanels(Index).Style
                 Text = VBA.FormatDateTime(VBA.Date, vbShortDate)
             Case SbrPanelDTFormatLong
                 Text = VBA.FormatDateTime(VBA.Date, vbLongDate)
+            Case SbrPanelDTFormatMedium
+                Text = Format$(VBA.Date, "Medium Date")
+            Case SbrPanelDTFormatGeneral
+                Text = VBA.FormatDateTime(VBA.Date, vbGeneralDate)
+            Case SbrPanelDTFormatCustom
+                If Not PropShadowPanels(Index).Text = vbNullString Then Text = Format$(VBA.Date, PropShadowPanels(Index).Text)
         End Select
         Enabled = PropShadowPanels(Index).Enabled
     Case SbrPanelStyleKana
@@ -1820,6 +1836,20 @@ Select Case PropShadowPanels(Index).Style
         Const vbKeyHanja As Long = &H19
         GetKeyboardState KeyState(0)
         Enabled = CBool(KeyState(vbKeyHanja))
+    Case SbrPanelStyleDateTime
+        Select Case PropShadowPanels(Index).DTFormat
+            Case SbrPanelDTFormatShort
+                Text = VBA.FormatDateTime(VBA.Date, vbShortDate) & " " & VBA.FormatDateTime(VBA.Time, vbShortTime)
+            Case SbrPanelDTFormatLong
+                Text = VBA.FormatDateTime(VBA.Date, vbLongDate) & " " & VBA.FormatDateTime(VBA.Time, vbLongTime)
+            Case SbrPanelDTFormatMedium
+                Text = Format$(VBA.Date, "Medium Date") & " " & RTrim$(Format$(VBA.Time, "Medium Time"))
+            Case SbrPanelDTFormatGeneral
+                Text = VBA.FormatDateTime(VBA.Now, vbGeneralDate)
+            Case SbrPanelDTFormatCustom
+                If Not PropShadowPanels(Index).Text = vbNullString Then Text = Format$(VBA.Now, PropShadowPanels(Index).Text)
+        End Select
+        Enabled = PropShadowPanels(Index).Enabled
 End Select
 End Sub
 
